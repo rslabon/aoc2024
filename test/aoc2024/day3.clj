@@ -25,8 +25,7 @@
                                (.contains group "mul") (str "(*" " " arg1 " " arg2 ")")
                                (= group "do()") "do"
                                (= group "don't()") "don't")
-                             ) matches)
-        instructions (concat ["do"] instructions ["don't"])]
+                             ) matches)]
     instructions
     ))
 
@@ -61,10 +60,10 @@
     (is (= (part1 puzzle-input) 168539636))
     )
   (testing "sanitize2"
-    (is (= (sanitize2 "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))") ["do" "(* 2 4)" "don't" "(* 5 5)" "(* 11 8)" "do" "(* 8 5)" "don't"]))
+    (is (= (sanitize2 "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))") ["(* 2 4)" "don't" "(* 5 5)" "(* 11 8)" "do" "(* 8 5)"]))
     )
   (testing "evaluator2"
-    (is (= (evaluator2 ["do" "(* 2 4)" "don't" "(* 5 5)" "(* 11 8)" "do" "(* 8 5)" "don't"]) 48))
+    (is (= (evaluator2 ["(* 2 4)" "don't" "(* 5 5)" "(* 11 8)" "do" "(* 8 5)"]) 48))
     )
   (testing "part2"
     (is (= (part2 puzzle-input) 97529391))

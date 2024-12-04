@@ -63,15 +63,8 @@
     ))
 
 (defn find-word [word row col graph]
-  (let [right-word (take-word next-right (count word) row col graph)
-        left-word (take-word next-left (count word) row col graph)
-        up-word (take-word next-up (count word) row col graph)
-        down-word (take-word next-down (count word) row col graph)
-        diag-down-right-word (take-word next-diag-down-right (count word) row col graph)
-        diag-down-left-word (take-word next-diag-down-left (count word) row col graph)
-        diag-up-right-word (take-word next-diag-up-right (count word) row col graph)
-        diag-up-left-word (take-word next-diag-up-left (count word) row col graph)
-        words [right-word left-word up-word down-word diag-down-right-word diag-down-left-word diag-up-right-word diag-up-left-word]
+  (let [directions [next-left next-right next-down next-up next-diag-down-right next-diag-down-left next-diag-up-left next-diag-up-right]
+        words (mapv #(take-word % (count word) row col graph) directions)
         words (filterv not-empty words)
         found-words (filterv #(= word %) words)]
     (count found-words)

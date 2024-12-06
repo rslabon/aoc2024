@@ -48,15 +48,34 @@
     )
   )
 
-(defn find-path [graph]
-  (let [guard (find-guard graph)
-        ;_ (println graph)
+(defn next-far-step [guard graph]
+  (let [dir (:dir guard)
+        [gx gy] (:coord guard)
+        next-coord (condp = dir
+                     "^" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (< x gx) (= "#" (get graph [x y])))) (keys graph)))
+                               next (if (empty? next) nil (inc (apply max next)))]
+                           [next gy])
+                     ">" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (> y gy) (= "#" (get graph [x y])))) (keys graph)))
+                               next (if (empty? next) nil (dec (apply min next)))]
+                           [gx next])
+                     "v" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (> x gx) (= "#" (get graph [x y])))) (keys graph)))
+                               next (if (empty? next) nil (dec (apply min next)))]
+                           [next gy])
+                     "<" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (< y gy) (= "#" (get graph [x y])))) (keys graph)))
+                               next (if (empty? next) nil (inc (apply max next)))]
+                           [gx next]
+                           ))
         ]
+    (if (contains? graph next-coord)
+      {:coord next-coord :dir (turn-right dir)}
+      nil
+      )))
+
+(defn find-path [graph]
+  (let [guard (find-guard graph)]
     (loop [prev-guard guard
            path [guard]]
-      (let [next-guard (next-step prev-guard graph)
-            ;_ (println prev-guard next-guard)
-            ]
+      (let [next-guard (next-step prev-guard graph)]
         (if (nil? next-guard)
           (mapv :coord path)
           (recur next-guard (conj path next-guard))
@@ -75,7 +94,7 @@
 
 (defn cycle? [path]
   (let [coords-freq (frequencies path)]
-    (> (apply max (vals coords-freq)) 10)
+    (> (apply max (vals coords-freq)) 2)
     )
   )
 
@@ -83,7 +102,7 @@
   (let [guard (find-guard graph)]
     (loop [prev-guard guard
            path [guard]]
-      (let [next-guard (next-step prev-guard graph)]
+      (let [next-guard (next-far-step prev-guard graph)]
         (cond
           (nil? next-guard) false
           (cycle? (mapv :coord path)) true
@@ -94,31 +113,21 @@
     )
   )
 
-(defn has-obstacle? [graph [x y]]
-  (let [vertical-obstacle (some (fn [[gx gy]] (and (= x gx) (= (get graph [gx gy]) "#"))) (keys graph))
-        horizontal-obstacle (some (fn [[gx gy]] (and (= y gy) (= (get graph [gx gy]) "#"))) (keys graph))]
-    (or vertical-obstacle horizontal-obstacle)
-    )
-  )
-
 (defn part2 [input]
   (let [graph (parse-graph input)
-        all_positions (filterv #(and (not= (get graph %) "#") (not= (get graph %) "^")) (keys graph))
         guard (find-guard graph)
         path (vec (set (find-path graph)))
-        path (filterv #(not= (:coord guard) %) path)
-        ]
+        path (filterv #(not= (:coord guard) %) path)]
     (loop [positions path
-           cycle-count 0
-           i 1]
+           cycle-count 0]
       (if (empty? positions)
         cycle-count
         (let [position (first positions)
               new-graph (assoc graph position "#")
-              _ (println "check " i "/" (count path))]
+              _ (println "check nr " (- (count path) (count positions)) "/" (count path))]
           (if (leads-to-cycle? new-graph)
-            (recur (rest positions) (inc cycle-count) (inc i))
-            (recur (rest positions) cycle-count (inc i))
+            (recur (rest positions) (inc cycle-count))
+            (recur (rest positions) cycle-count)
             )
           )
         )
@@ -153,14 +162,21 @@
       (is (= (part1 example-input) 41))
       (is (= (part1 puzzle-input) 5153))
       )
-    ;(testing "cycle?"
-    ;  (is (= (cycle? [[0 1] [0 2] [0 3] [0 4] [0 5] [0 6] [0 7] [0 8] [0 9]]) false))
-    ;  (is (= (cycle? [[0 1] [0 2] [0 3] [0 1] [0 2] [0 3] [0 7] [0 8] [0 9]]) false))
-    ;  (is (= (cycle? [[0 1] [0 2] [0 3] [0 4] [0 1] [0 2] [0 3] [0 4]]) true))
-    ;  (is (= (cycle? [[0 1] [0 2] [0 3] [0 4] [1 1] [1 2] [1 3] [1 5] [0 1] [0 2] [0 4]]) false))
-    ;  )
+    (testing "next-far-step"
+      (is (= (next-far-step (find-guard example-graph) example-graph) {:coord [1 4] :dir ">"}))
+      (is (= (next-far-step {:coord [1 4] :dir ">"} example-graph) {:coord [1 8] :dir "v"}))
+      (is (= (next-far-step {:coord [1 8] :dir "v"} example-graph) {:coord [6 8] :dir "<"}))
+      (is (= (next-far-step {:coord [6 8] :dir "<"} example-graph) {:coord [6 2] :dir "^"}))
+      (is (= (next-far-step {:coord [6 2] :dir "^"} example-graph) {:coord [4 2] :dir ">"}))
+      (is (= (next-far-step {:coord [4 2] :dir ">"} example-graph) {:coord [4 6] :dir "v"}))
+      (is (= (next-far-step {:coord [4 6] :dir "v"} example-graph) {:coord [8 6] :dir "<"}))
+      (is (= (next-far-step {:coord [8 6] :dir "<"} example-graph) {:coord [8 1] :dir "^"}))
+      (is (= (next-far-step {:coord [8 1] :dir "^"} example-graph) {:coord [7 1] :dir ">"}))
+      (is (= (next-far-step {:coord [7 1] :dir ">"} example-graph) {:coord [7 7] :dir "v"}))
+      (is (= (next-far-step {:coord [7 7] :dir "v"} example-graph) nil))
+      )
     (testing "part2"
       (is (= (part2 example-input) 6))
-      (is (= (part2 puzzle-input) 0))
+      (is (= (part2 puzzle-input) 1711)) ; slow!!! takes 4 minutes!!!
       )
     ))

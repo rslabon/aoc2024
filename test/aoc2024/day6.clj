@@ -48,20 +48,24 @@
     )
   )
 
-(defn next-far-step [guard graph]
+(defn find-obstructions [graph]
+  (filterv #(= "#" (get graph %)) (keys graph))
+  )
+
+(defn next-far-step [guard graph obstructions]
   (let [dir (:dir guard)
         [gx gy] (:coord guard)
         next-coord (condp = dir
-                     "^" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (< x gx) (= "#" (get graph [x y])))) (keys graph)))
+                     "^" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (< x gx))) obstructions))
                                next (if (empty? next) nil (inc (apply max next)))]
                            [next gy])
-                     ">" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (> y gy) (= "#" (get graph [x y])))) (keys graph)))
+                     ">" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (> y gy))) obstructions))
                                next (if (empty? next) nil (dec (apply min next)))]
                            [gx next])
-                     "v" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (> x gx) (= "#" (get graph [x y])))) (keys graph)))
+                     "v" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (> x gx))) obstructions))
                                next (if (empty? next) nil (dec (apply min next)))]
                            [next gy])
-                     "<" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (< y gy) (= "#" (get graph [x y])))) (keys graph)))
+                     "<" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (< y gy))) obstructions))
                                next (if (empty? next) nil (inc (apply max next)))]
                            [gx next]
                            ))
@@ -99,10 +103,11 @@
   )
 
 (defn leads-to-cycle? [graph]
-  (let [guard (find-guard graph)]
+  (let [guard (find-guard graph)
+        obstructions (find-obstructions graph)]
     (loop [prev-guard guard
            path [guard]]
-      (let [next-guard (next-far-step prev-guard graph)]
+      (let [next-guard (next-far-step prev-guard graph obstructions)]
         (cond
           (nil? next-guard) false
           (cycle? (mapv :coord path)) true
@@ -163,20 +168,20 @@
       (is (= (part1 puzzle-input) 5153))
       )
     (testing "next-far-step"
-      (is (= (next-far-step (find-guard example-graph) example-graph) {:coord [1 4] :dir ">"}))
-      (is (= (next-far-step {:coord [1 4] :dir ">"} example-graph) {:coord [1 8] :dir "v"}))
-      (is (= (next-far-step {:coord [1 8] :dir "v"} example-graph) {:coord [6 8] :dir "<"}))
-      (is (= (next-far-step {:coord [6 8] :dir "<"} example-graph) {:coord [6 2] :dir "^"}))
-      (is (= (next-far-step {:coord [6 2] :dir "^"} example-graph) {:coord [4 2] :dir ">"}))
-      (is (= (next-far-step {:coord [4 2] :dir ">"} example-graph) {:coord [4 6] :dir "v"}))
-      (is (= (next-far-step {:coord [4 6] :dir "v"} example-graph) {:coord [8 6] :dir "<"}))
-      (is (= (next-far-step {:coord [8 6] :dir "<"} example-graph) {:coord [8 1] :dir "^"}))
-      (is (= (next-far-step {:coord [8 1] :dir "^"} example-graph) {:coord [7 1] :dir ">"}))
-      (is (= (next-far-step {:coord [7 1] :dir ">"} example-graph) {:coord [7 7] :dir "v"}))
-      (is (= (next-far-step {:coord [7 7] :dir "v"} example-graph) nil))
+      (is (= (next-far-step (find-guard example-graph) example-graph (find-obstructions example-graph)) {:coord [1 4] :dir ">"}))
+      (is (= (next-far-step {:coord [1 4] :dir ">"} example-graph (find-obstructions example-graph)) {:coord [1 8] :dir "v"}))
+      (is (= (next-far-step {:coord [1 8] :dir "v"} example-graph (find-obstructions example-graph)) {:coord [6 8] :dir "<"}))
+      (is (= (next-far-step {:coord [6 8] :dir "<"} example-graph (find-obstructions example-graph)) {:coord [6 2] :dir "^"}))
+      (is (= (next-far-step {:coord [6 2] :dir "^"} example-graph (find-obstructions example-graph)) {:coord [4 2] :dir ">"}))
+      (is (= (next-far-step {:coord [4 2] :dir ">"} example-graph (find-obstructions example-graph)) {:coord [4 6] :dir "v"}))
+      (is (= (next-far-step {:coord [4 6] :dir "v"} example-graph (find-obstructions example-graph)) {:coord [8 6] :dir "<"}))
+      (is (= (next-far-step {:coord [8 6] :dir "<"} example-graph (find-obstructions example-graph)) {:coord [8 1] :dir "^"}))
+      (is (= (next-far-step {:coord [8 1] :dir "^"} example-graph (find-obstructions example-graph)) {:coord [7 1] :dir ">"}))
+      (is (= (next-far-step {:coord [7 1] :dir ">"} example-graph (find-obstructions example-graph)) {:coord [7 7] :dir "v"}))
+      (is (= (next-far-step {:coord [7 7] :dir "v"} example-graph (find-obstructions example-graph)) nil))
       )
     (testing "part2"
       (is (= (part2 example-input) 6))
-      (is (= (part2 puzzle-input) 1711)) ; slow!!! takes 4 minutes!!!
+      (is (= (part2 puzzle-input) 1711))
       )
     ))

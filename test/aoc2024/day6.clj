@@ -49,24 +49,24 @@
   )
 
 (defn find-obstructions [graph]
-  (filterv #(= "#" (get graph %)) (keys graph))
+  (sort-by second (sort-by first (filterv #(= "#" (get graph %)) (keys graph))))
   )
 
 (defn next-far-step [guard graph obstructions]
   (let [dir (:dir guard)
         [gx gy] (:coord guard)
         next-coord (condp = dir
-                     "^" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (< x gx))) obstructions))
-                               next (if (empty? next) nil (inc (apply max next)))]
+                     "^" (let [next (filterv (fn [[x y]] (and (= gy y) (< x gx))) obstructions)
+                               next (if (empty? next) nil (inc (first (last next))))]
                            [next gy])
-                     ">" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (> y gy))) obstructions))
-                               next (if (empty? next) nil (dec (apply min next)))]
+                     ">" (let [next (filterv (fn [[x y]] (and (= gx x) (> y gy))) obstructions)
+                               next (if (empty? next) nil (dec (second (first next))))]
                            [gx next])
-                     "v" (let [next (mapv first (filterv (fn [[x y]] (and (= gy y) (> x gx))) obstructions))
-                               next (if (empty? next) nil (dec (apply min next)))]
+                     "v" (let [next (filterv (fn [[x y]] (and (= gy y) (> x gx))) obstructions)
+                               next (if (empty? next) nil (dec (first (first next))))]
                            [next gy])
-                     "<" (let [next (mapv second (filterv (fn [[x y]] (and (= gx x) (< y gy))) obstructions))
-                               next (if (empty? next) nil (inc (apply max next)))]
+                     "<" (let [next (filterv (fn [[x y]] (and (= gx x) (< y gy))) obstructions)
+                               next (if (empty? next) nil (inc (second (last next))))]
                            [gx next]
                            ))
         ]

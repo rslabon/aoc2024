@@ -1,6 +1,5 @@
 (ns aoc2024.day7
-  (:require [clojure.math.combinatorics :as combo]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (def example-input "190: 10 19\n3267: 81 40 27\n83: 17 5\n156: 15 6\n7290: 6 8 6 15\n161011: 16 10 13\n192: 17 8 14\n21037: 9 7 18 13\n292: 11 6 16 20")
@@ -26,10 +25,20 @@
   (read-string (str a b))
   )
 
+(def selection
+  (memoize (fn [coll k]
+             (cond
+               (= k 0) []
+               (= k 1) (mapv list coll)
+               :else (for [i coll
+                           j (selection coll (dec k))]
+                       (into [i] j))
+               ))))
+
 (defn valid?
   ([op-fns result numbers]
    (let [n (dec (count numbers))
-         possible-operators (combo/selections op-fns n)]
+         possible-operators (selection op-fns n)]
      (true? (some (fn [operators] (= result (compute operators numbers))) possible-operators))
      )
    )
@@ -59,6 +68,19 @@
   )
 
 (deftest a-test
+  (testing "selection"
+    (is (= (selection [0 1] 1) (combo/selections [0 1] 1)))
+    (is (= (selection [0 1] 2) (combo/selections [0 1] 2)))
+    (is (= (selection [0 1] 3) (combo/selections [0 1] 3)))
+    (is (= (selection [0 1] 4) (combo/selections [0 1] 4)))
+    (is (= (selection [0 1] 5) (combo/selections [0 1] 5)))
+    (is (= (selection [0 1] 6) (combo/selections [0 1] 6)))
+    (is (= (selection [0 1] 7) (combo/selections [0 1] 7)))
+    (is (= (selection [0 1] 8) (combo/selections [0 1] 8)))
+    (is (= (selection [0 1] 9) (combo/selections [0 1] 9)))
+    (is (= (selection [0 1] 10) (combo/selections [0 1] 10)))
+    (is (= (selection [0 1] 11) (combo/selections [0 1] 11)))
+    )
   (testing "valid?"
     (is (= (valid? [+ *] 3267 [81 40 27]) true))
     (is (= (valid? [+ *] 292 [11 6 16 20]) true))

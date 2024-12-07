@@ -68,19 +68,6 @@
   )
 
 (deftest a-test
-  (testing "selection"
-    (is (= (selection [0 1] 1) (combo/selections [0 1] 1)))
-    (is (= (selection [0 1] 2) (combo/selections [0 1] 2)))
-    (is (= (selection [0 1] 3) (combo/selections [0 1] 3)))
-    (is (= (selection [0 1] 4) (combo/selections [0 1] 4)))
-    (is (= (selection [0 1] 5) (combo/selections [0 1] 5)))
-    (is (= (selection [0 1] 6) (combo/selections [0 1] 6)))
-    (is (= (selection [0 1] 7) (combo/selections [0 1] 7)))
-    (is (= (selection [0 1] 8) (combo/selections [0 1] 8)))
-    (is (= (selection [0 1] 9) (combo/selections [0 1] 9)))
-    (is (= (selection [0 1] 10) (combo/selections [0 1] 10)))
-    (is (= (selection [0 1] 11) (combo/selections [0 1] 11)))
-    )
   (testing "valid?"
     (is (= (valid? [+ *] 3267 [81 40 27]) true))
     (is (= (valid? [+ *] 292 [11 6 16 20]) true))

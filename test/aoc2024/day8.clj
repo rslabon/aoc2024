@@ -9,9 +9,9 @@
 (def puzzle-input (slurp "resources/day8.txt"))
 
 (defn parse-graph [input]
-  (let [lines (vec (str/split input #"\n"))
+  (let [lines (str/split input #"\n")
         lines (mapv #(str/split % #"") lines)
-        cells (map-indexed (fn [row line] (map-indexed (fn [col cell] [[row col] cell]) line)) lines)
+        cells (map-indexed (fn [row line] (map-indexed (fn [col val] [[row col] val]) line)) lines)
         cells (apply concat cells)]
     (into {} cells)
     )
@@ -21,8 +21,8 @@
   [(- ax bx) (- ay by)]
   )
 
-(defn by-cells [graph]
-  (into {} (for [[k v] (group-by first (mapv (fn [val] (vec (reverse val))) (into [] graph)))] [k (vec (apply concat (mapv rest v)))]))
+(defn by-freq [graph]
+  (into {} (for [[k v] (group-by first (mapv (fn [val] (reverse val)) graph))] [k (apply concat (mapv rest v))]))
   )
 
 (defn repeat-antinode [graph x y dx dy]
@@ -42,9 +42,9 @@
     )
   )
 
-(defn find-antinodes [repeatable graph graph-by-cells [x y]]
+(defn find-antinodes [repeatable graph graph-by-freq [x y]]
   (let [freq (get graph [x y])
-        other-cells (filterv (fn [[ox oy]] (not= [x y] [ox oy])) (graph-by-cells freq))
+        other-cells (filterv (fn [[ox oy]] (not= [x y] [ox oy])) (get graph-by-freq freq))
         antinodes (mapv (fn [[ox oy]] (let [[dx dy] (diff [x y] [ox oy])]
                                         (if repeatable
                                           (repeat-antinode graph x y dx dy)
@@ -54,15 +54,15 @@
     (apply concat antinodes)
     ))
 
-(defn find-all-antinodes [repeatable graph graph-by-cells]
-  (loop [cells (filterv (fn [[[x y] freq]] (not= "." freq)) (into [] graph))
+(defn find-all-antinodes [repeatable graph graph-by-freq]
+  (loop [freqs (filterv (fn [[[x y] freq]] (not= "." freq)) graph)
          antinodes (set [])]
-    (if (empty? cells)
+    (if (empty? freqs)
       antinodes
-      (let [[[x y]] (first cells)
-            freq-antinodes (find-antinodes repeatable graph graph-by-cells [x y])
+      (let [[[x y]] (first freqs)
+            freq-antinodes (find-antinodes repeatable graph graph-by-freq [x y])
             freq-antinodes (filter #(contains? graph %) freq-antinodes)]
-        (recur (rest cells) (into antinodes freq-antinodes))
+        (recur (rest freqs) (into antinodes freq-antinodes))
         )
       )
     )
@@ -85,8 +85,8 @@
 
 (defn part1 [input]
   (let [graph (parse-graph input)
-        graph-by-cells (by-cells graph)
-        all-antinodes (find-all-antinodes false graph graph-by-cells)
+        graph-by-freq (by-freq graph)
+        all-antinodes (find-all-antinodes false graph graph-by-freq)
         all-antinodes (set all-antinodes)
         ;_ (print-result graph all-antinodes)
         ]
@@ -96,9 +96,9 @@
 
 (defn part2 [input]
   (let [graph (parse-graph input)
-        graph-by-cells (by-cells graph)
-        antennas (mapv first (filterv (fn [[[x y] freq]] (not= "." freq)) (into [] graph)))
-        all-antinodes (find-all-antinodes true graph graph-by-cells)
+        graph-by-freq (by-freq graph)
+        antennas (mapv first (filterv (fn [[[x y] freq]] (not= "." freq)) graph))
+        all-antinodes (find-all-antinodes true graph graph-by-freq)
         all-antinodes (set all-antinodes)
         ;_ (print-result graph all-antinodes)
         all-antinodes (into all-antinodes antennas)]
@@ -121,9 +121,9 @@
     )
   (testing "find-antinodes"
     (let [graph (parse-graph example-input2)]
-      (is (= (find-antinodes false graph (by-cells graph) [3 4]) [[2 0] [1 3]]))
-      (is (= (find-antinodes false graph (by-cells graph) [5 5]) [[7 6] [6 2]]))
-      (is (= (find-antinodes false graph (by-cells graph) [4 8]) [[5 12] [3 11]]))
+      (is (= (find-antinodes false graph (by-freq graph) [3 4]) [[2 0] [1 3]]))
+      (is (= (find-antinodes false graph (by-freq graph) [5 5]) [[7 6] [6 2]]))
+      (is (= (find-antinodes false graph (by-freq graph) [4 8]) [[5 12] [3 11]]))
       )
     )
   (testing "part1"

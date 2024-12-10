@@ -34,6 +34,15 @@
       )
   ))
 
+(defn find-rating-count [graph [[x y] height]]
+  (let [next-cells (adj graph [[x y] height])]
+    (cond
+      (= height 9) 1
+      (empty? next-cells) 0
+      :else (apply + (mapv #(find-rating-count graph %) next-cells))
+      )
+    ))
+
 (defn part1[input]
   (let [graph (parse-graph input)
         graph-by-height (group-by second (into [] graph))
@@ -41,6 +50,15 @@
         trails (mapv #(find-trails-count graph %) start-cells)
         scores (mapv count trails)]
     (apply + scores)
+    )
+  )
+
+(defn part2[input]
+  (let [graph (parse-graph input)
+        graph-by-height (group-by second (into [] graph))
+        start-cells (get graph-by-height 0)
+        ratings (mapv #(find-rating-count graph %) start-cells)]
+    (apply + ratings)
     )
   )
 
@@ -61,6 +79,10 @@
       (is (= (part1 example-input1) 1))
       (is (= (part1 example-input2) 36))
       (is (= (part1 puzzle-input) 822))
+      )
+    (testing "part2"
+      (is (= (part2 example-input2) 81))
+      (is (= (part2 puzzle-input) 1801))
       )
     )
   )

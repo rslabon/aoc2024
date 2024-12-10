@@ -58,14 +58,13 @@
   (loop [digits (mapv read-string (str/split line #""))
          file-id 0
          file true
-         result []
-         index 0]
+         result []]
     (if (empty? digits)
       (filterv (fn [[digit]] (not= digit 0)) result)
       (let [digit (first digits)]
         (if file
-          (recur (rest digits) (inc file-id) false (conj result [digit (str file-id) index]) (inc index))
-          (recur (rest digits) file-id true (conj result [digit "." index]) (inc index))
+          (recur (rest digits) (inc file-id) false (conj result [digit (str file-id)]) )
+          (recur (rest digits) file-id true (conj result [digit "."]))
           )
         ))))
 
@@ -79,21 +78,21 @@
        (if (empty? free-blocks)
          (recur blocks (rest file-blocks))
          (let [free-block (first free-blocks)
-               [free-block-space _ index] free-block
+               [free-block-space _] free-block
                lefts-space (- free-block-space file-block-digit)
                free-block-place (.indexOf blocks free-block)
                file-block-place (.indexOf blocks file-block)]
            (if (< free-block-place file-block-place)
              (if (= lefts-space 0)
                (recur (mapv #(cond
-                               (= (get % 2) (get free-block 2)) file-block
-                               (= (get % 2) (get file-block 2)) free-block
+                               (identical? % free-block) file-block
+                               (identical? % file-block) free-block
                                :else %
                                ) blocks) (rest file-blocks))
                (recur (apply concat
                              (mapv #(cond
-                                      (= (get % 2) (get free-block 2)) [file-block [lefts-space "." (rand)]]
-                                      (= (get % 2) (get file-block 2)) [[file-block-digit "." (rand)]]
+                                      (identical? % free-block) [file-block [lefts-space "."]]
+                                      (identical? % file-block) [[file-block-digit "."]]
                                       :else [%]
                                       ) blocks)) (rest file-blocks))
 
@@ -121,7 +120,7 @@
     (if (empty? disk-map-block)
       acc
       (let [block (first disk-map-block)
-            [digit id _] block]
+            [digit id] block]
         (recur (if (= id ".")
                  acc
                  (let [value (mapv #(* (+ i %) (read-string id)) (range digit))]
@@ -157,9 +156,9 @@
     ;(is (= (part1 puzzle-input) 6415184586041))
     )
   (testing "parse-disk-map-block"
-    (is (= (parse-disk-map-block "03") [[3 "." 1]]))
-    (is (= (parse-disk-map-block "30") [[3 "0" 0]]))
-    (is (= (parse-disk-map-block "312") [[3 "0" 0] [1 "." 1] [2 "1" 2]]))
+    (is (= (parse-disk-map-block "03") [[3 "."]]))
+    (is (= (parse-disk-map-block "30") [[3 "0"]]))
+    (is (= (parse-disk-map-block "312") [[3 "0"] [1 "."] [2 "1"]]))
     )
   (testing "fragmentation"
     (is (= (disk-map-as-string (fragmentation (parse-disk-map-block "2333133121414131402"))) "00992111777.44.333....5555.6666.....8888.."))

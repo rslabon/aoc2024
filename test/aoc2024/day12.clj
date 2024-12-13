@@ -5,7 +5,8 @@
 
 (def example-input "AAAA\nBBCD\nBBCC\nEEEC")
 (def example-input2 "OOOOO\nOXOXO\nOOOOO\nOXOXO\nOOOOO")
-(def example-input3 "RRRRIICCFF\nRRRRIICCCF\nVVRRRCCFFF\nVVRCCCJFFF\nVVVVCJJCFE\nVVIVCCJJEE\nVVIIICJJEE\nMIIIIIJJEE\nMIIISIJEEE\nMMMISSJEEE")
+(def example-input3 "EEEEE\nEXXXX\nEEEEE\nEXXXX\nEEEEE")
+(def example-input4 "RRRRIICCFF\nRRRRIICCCF\nVVRRRCCFFF\nVVRCCCJFFF\nVVVVCJJCFE\nVVIVCCJJEE\nVVIIICJJEE\nMIIIIIJJEE\nMIIISIJEEE\nMMMISSJEEE")
 (def puzzle-input (slurp "resources/day12.txt"))
 
 (defn parse-graph [input]
@@ -74,8 +75,53 @@
     (apply + prices)
     ))
 
+(defn condense [items]
+  (cond
+    (empty? items) []
+    (= (count items) 1) items
+    :else (loop [result [(first items)]
+                 prev (first items)
+                 items (rest items)]
+            (if (empty? items)
+              result
+              (if (= 1 (apply + (mapv - (first items) prev)))
+                (recur result (first items) (rest items))
+                (recur (conj result (first items)) (first items) (rest items))
+                )
+              )
+            )
+    )
+  )
+
+(defn sides-above-and-bellow [graph points [dx dy]]
+  (if (empty? points)
+    0
+    (let [type (get graph (first points))
+          above (mapv (fn [[x y]] [[x y] (get graph [(- x dx) (- y dy)] :outside)]) points)
+          above (filterv #(not= type (second %)) above)
+          above (mapv first above)
+          above (condense above)
+          bellow (mapv (fn [[x y]] [[x y] (get graph [(+ x dx) (+ y dy)] :outside)]) points)
+          bellow (filterv #(not= type (second %)) bellow)
+          bellow (mapv first bellow)
+          bellow (condense bellow)]
+      (+ (count above) (count bellow))
+      )
+    )
+  )
+
 (defn sides-of-region [graph region]
-  -1
+  (let [points (mapv first region)
+        hpoints (group-by first points)
+        hpoints (sort-by first hpoints)
+        hpoints (mapv #(sort-by second %) (vals hpoints))
+        hsides (apply + (mapv #(sides-above-and-bellow graph % [1 0]) hpoints))
+        vpoints (group-by second points)
+        vpoints (sort-by second vpoints)
+        vpoints (mapv #(sort-by first %) (vals vpoints))
+        vsides (apply + (mapv #(sides-above-and-bellow graph % [0 1]) vpoints))]
+    (+ hsides vsides)
+    )
   )
 
 (defn part2 [input]
@@ -96,13 +142,14 @@
   (testing "part1"
     (is (= (part1 example-input) 140))
     (is (= (part1 example-input2) 772))
-    (is (= (part1 example-input3) 1930))
+    (is (= (part1 example-input4) 1930))
     (is (= (part1 puzzle-input) 1533024))
     )
   (testing "part2"
     (is (= (part2 example-input) 80))
-    ;(is (= (part1 example-input2) 772))
-    ;(is (= (part1 example-input3) 1930))
-    ;(is (= (part1 puzzle-input) 1533024))
+    (is (= (part2 example-input2) 436))
+    (is (= (part2 example-input3) 236))
+    (is (= (part2 example-input4) 1206))
+    (is (= (part2 puzzle-input) 910066))
     )
   )

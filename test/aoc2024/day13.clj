@@ -46,13 +46,80 @@
 
 (defn part1 [input]
   (let [configurations (parse-configurations input)
-        costs (filterv some? (map-indexed
-                               (fn [idx configuration]
-                                 (do
-                                   (println "processing " idx "/" (count configurations) " configuration=" configuration)
-                                   (apply cost-of-prize configuration))
-                                 ) configurations))
-        ]
+        costs (filterv some? (mapv (fn [[a b price]] (cost-of-prize a b price)) configurations))]
+    (apply + costs)
+    )
+  )
+
+(defn rows-to-columns
+  [rows]
+  (apply mapv vector rows))
+
+(def columns-to-rows rows-to-columns)
+
+(defn ensure-nth-pivot-not-zero
+  [rows n]
+  (if-not (zero? (get-in rows [n n]))
+    rows
+    (let [columns (rows-to-columns rows)]
+      (loop [i (inc n)]
+        (cond
+          (= i (count columns)) (throw (Exception. "Couldn't invert matrix"))
+          (zero? (get-in columns [i n])) (recur (inc i))
+          :else (let [switched-columns (assoc-in
+                                         (assoc-in columns
+                                                   [n] (nth columns i))
+                                         [i] (nth columns n))]
+                  (columns-to-rows switched-columns)))))))
+
+(defn pivot
+  [rows n]
+  (let [pivot-row (nth rows n)
+        pivot-element (get pivot-row n)]
+    (mapv (fn [row idx]
+            (if (= idx n)
+              row
+              (let [factor (/ (get row n) pivot-element)]
+                (mapv - row (map #(* factor %) pivot-row)))))
+          rows (range))))
+
+(defn gauss-elimination
+  [rows]
+  (reduce
+    (fn [matrix n] (pivot
+                     (ensure-nth-pivot-not-zero matrix n)
+                     n))
+    rows
+    (range (count rows))))
+
+(defn back-substitute
+  [matrix]
+  (let [n (dec (count matrix))]
+    (loop [i n
+           values (vec (repeat (inc n) 0))]
+      (if (neg? i)
+        values
+        (let [row (nth matrix i)
+              sum (reduce + (map * (subvec row (inc i)) (subvec values (inc i))))
+              value (/ (- (last row) sum) (get row i))]
+          (recur (dec i) (assoc values i value)))))))
+
+(defn solve-system
+  [matrix]
+  (back-substitute (gauss-elimination matrix)))
+
+(defn part2 [input]
+  (let [configurations (parse-configurations input)
+        costs (mapv (fn [[[ax ay] [bx by] [X Y]]]
+                     (let [matrix [[ax bx (+ X 10000000000000)]
+                                   [ay by (+ Y 10000000000000)]]
+                           [a b] (solve-system matrix)]
+                       (if (and (integer? a) (integer? b))
+                         (+ (* a 3) (* b 1))
+                         nil
+                         ))
+                     ) configurations)
+        costs (filterv some? costs)]
     (apply + costs)
     )
   )
@@ -67,5 +134,8 @@
   (testing "part1"
     (is (= (part1 example-input) 480))
     (is (= (part1 puzzle-input) 35997))
+    )
+  (testing "part2"
+    (is (= (part2 puzzle-input) 82510994362072))
     )
   )

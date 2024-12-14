@@ -81,17 +81,16 @@
         [seconds robots] (loop [stop false
                                 seconds 0
                                 robots robots]
-                           (do
-                             (if stop
-                               [seconds robots]
-                               (let [robots (mapv (fn [[px py vx vy]]
-                                                    (let [[x y] (move-robot px py vx vy 0 xmax 0 ymax)]
-                                                      [x y vx vy])) robots)
-                                     picture (robots-to-string xmax ymax robots)
-                                     stop (str/includes? picture "1111111111111111111111111111111")]
-                                 (recur stop (inc seconds) robots))
-                               )
-                             ))
+                           (if stop
+                             [seconds robots]
+                             (let [robots (mapv (fn [[px py vx vy]]
+                                                  (let [[x y] (move-robot px py vx vy 0 xmax 0 ymax)]
+                                                    [x y vx vy])) robots)
+                                   picture (robots-to-string xmax ymax robots)
+                                   stop (str/includes? picture "1111111111111111111111111111111")]
+                               (recur stop (inc seconds) robots))
+                             )
+                           )
         _ (println (robots-to-string xmax ymax robots))
         ]
     seconds

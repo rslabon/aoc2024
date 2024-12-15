@@ -153,7 +153,7 @@
     graph
     ))
 
-(defn move-right [graph [rx ry] [sx sy]]
+(defn move-right [graph [rx ry] [sx _]]
   (let [nodes (filterv (fn [[[x y]]] (and (>= x rx) (< x sx) (= y ry))) graph)
         nodes (mapv (fn [[[x y] cell]] [[(+ x 1) y] cell]) nodes)
         graph (reduce (fn [g [k v]] (assoc g k v)) graph nodes)

@@ -122,9 +122,9 @@
       )
     ))
 
-(defn sum-GPS-coordinates [graph]
+(defn sum-GPS-coordinates [graph mark]
   (let [boxes (filterv (fn [[_ cell]]
-                         (= cell "O")
+                         (= cell mark)
                          ) graph)
         boxes (mapv first boxes)
         boxes (mapv (fn [[x y]] (+ (* y 100) x)) boxes)]
@@ -142,7 +142,7 @@
                 )
         _ (print-graph graph)
         ]
-    (sum-GPS-coordinates graph)
+    (sum-GPS-coordinates graph "O")
     ))
 
 (defn move-left [graph [rx ry] [sx _]]
@@ -233,15 +233,6 @@
       )
     ))
 
-(defn sum-GPS-coordinates2 [graph]
-  (let [boxes (filterv (fn [[_ cell]]
-                         (= cell "[")
-                         ) graph)
-        boxes (mapv first boxes)
-        boxes (mapv (fn [[x y]] (+ (* y 100) x)) boxes)]
-    (apply + boxes)
-    ))
-
 (defn part2 [input]
   (let [input (-> input
                   (str/replace "." "..")
@@ -259,7 +250,7 @@
                 )
         _ (print-graph graph)
         ]
-    (sum-GPS-coordinates2 graph)
+    (sum-GPS-coordinates graph "[")
     ))
 
 (deftest a-test

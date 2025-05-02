@@ -43,6 +43,7 @@ with open("../../resources/day16.txt") as f:
 cells = set()
 start = None
 end = None
+
 for row, line in enumerate(lines):
     for col, val in enumerate(line):
         if val == "#":
@@ -140,7 +141,7 @@ def part2():
             seen.add(prev_state)
             q.append(prev_state)
 
-    points = set(map(lambda item: item[0], seen))
+    points = set([item[0] for item in seen])
     # for row, line in enumerate(lines):
     #     for col, val in enumerate(line):
     #         if (row, col) in points:
